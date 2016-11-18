@@ -1,0 +1,5 @@
+Slides/*
+.DS_Store
+Assignment*/*.pyc
+*.png
+*.jpg
