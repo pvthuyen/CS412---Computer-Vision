@@ -34,6 +34,7 @@ class Utilities:
 			"p - convert the image to grayscale and plot the gradient vectors of the image every N pixels.",
 			"r - convert the image to grayscale and rotate it using an angle of Q degrees.",
 			"h - Display this help window.",
+			"q - Quit the program."
 		]
 
 	def processFrame(self, frame, rawKeyPressed):
@@ -85,6 +86,8 @@ class Utilities:
 			cv2.createTrackbar("Blur", "Trackbar", 0, 10, self.placeHolder)
 			self._windowsOn = True
 
+		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
 		kernelSize = cv2.getTrackbarPos("Blur", "Trackbar")
 		kernelSize = 2 * kernelSize + 1
 		frame = cv2.blur(frame, (kernelSize, kernelSize), 0)
@@ -95,6 +98,8 @@ class Utilities:
 			cv2.namedWindow("Trackbar");
 			cv2.createTrackbar("Blur", "Trackbar", 0, 10, self.placeHolder)
 			self._windowsOn = True
+
+		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 		kernelSize = cv2.getTrackbarPos("Blur", "Trackbar")
 		kernelSize = 2 * kernelSize + 1
@@ -107,11 +112,12 @@ class Utilities:
 		frame = cv2.GaussianBlur(frame, (3, 3), 0)
 		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		xDerivativeKernel = np.zeros((3, 3))
-		xDerivativeKernel[-1:0, 0] = -1
+		xDerivativeKernel[0:3, 0] = -1
 		xDerivativeKernel[1, 0] = -2
-		xDerivativeKernel[-1:0, 2] = 1
+		xDerivativeKernel[0:3, 2] = 1
 		xDerivativeKernel[1, 2] = 2
-		frame = cv2.filter2D(frame, -1, xDerivativeKernel)
+
+		frame = cv2.filter2D(frame, cv2.CV_16S, xDerivativeKernel)
 		frame = 1.0 * (frame - frame.min()) / (frame.max() - frame.min()) * 255
 		return np.uint8(frame)
 
@@ -119,11 +125,11 @@ class Utilities:
 		frame = cv2.GaussianBlur(frame, (3, 3), 0)
 		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		yDerivativeKernel = np.zeros((3, 3))
-		yDerivativeKernel[0, -1:0] = -1
+		yDerivativeKernel[0, 0:3] = -1
 		yDerivativeKernel[0, 1] = -2
-		yDerivativeKernel[2, -1:0] = 1
+		yDerivativeKernel[2, 0:3] = 1
 		yDerivativeKernel[2, 1] = 2
-		frame = cv2.filter2D(frame, -1, yDerivativeKernel)
+		frame = cv2.filter2D(frame, cv2.CV_16S, yDerivativeKernel)
 		frame = 1.0 * (frame - frame.min()) / (frame.max() - frame.min()) * 255
 		return np.uint8(frame)
 
@@ -131,18 +137,18 @@ class Utilities:
 		frame = cv2.GaussianBlur(frame, (3, 3), 0)
 		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		xDerivativeKernel = np.zeros((3, 3))
-		xDerivativeKernel[-1:0, 0] = -1
+		xDerivativeKernel[0:3, 0] = -1
 		xDerivativeKernel[1, 0] = -2
-		xDerivativeKernel[-1:0, 2] = 1
+		xDerivativeKernel[0:3, 2] = 1
 		xDerivativeKernel[1, 2] = 2
-		xDerivative = cv2.filter2D(frame, -1, xDerivativeKernel)
+		xDerivative = cv2.filter2D(frame, cv2.CV_16S, xDerivativeKernel)
 
 		yDerivativeKernel = np.zeros((3, 3))
-		yDerivativeKernel[0, -1:0] = -1
+		yDerivativeKernel[0, 0:3] = -1
 		yDerivativeKernel[0, 1] = -2
-		yDerivativeKernel[2, -1:0] = 1
+		yDerivativeKernel[2, 0:3] = 1
 		yDerivativeKernel[2, 1] = 2
-		yDerivative = cv2.filter2D(frame, -1, yDerivativeKernel)
+		yDerivative = cv2.filter2D(frame, cv2.CV_16S, yDerivativeKernel)
 
 		frame = 0.5 * np.abs(xDerivative) + 0.5 * np.abs(yDerivative)
 		frame = 1.0 * (frame - frame.min()) / (frame.max() - frame.min()) * 255
@@ -157,18 +163,18 @@ class Utilities:
 		frame = cv2.GaussianBlur(frame, (3, 3), 0)
 		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		xDerivativeKernel = np.zeros((3, 3))
-		xDerivativeKernel[-1:0, 0] = -1
+		xDerivativeKernel[0:3, 0] = -1
 		xDerivativeKernel[1, 0] = -2
-		xDerivativeKernel[-1:0, 2] = 1
+		xDerivativeKernel[0:3, 2] = 1
 		xDerivativeKernel[1, 2] = 2
-		xDerivative = cv2.filter2D(frame, -1, xDerivativeKernel)
+		xDerivative = cv2.filter2D(frame, cv2.CV_16S, xDerivativeKernel)
 
 		yDerivativeKernel = np.zeros((3, 3))
-		yDerivativeKernel[0, -1:0] = -1
+		yDerivativeKernel[0, 0:3] = -1
 		yDerivativeKernel[0, 1] = -2
-		yDerivativeKernel[2, -1:0] = 1
+		yDerivativeKernel[2, 0:3] = 1
 		yDerivativeKernel[2, 1] = 2
-		yDerivative = cv2.filter2D(frame, -1, yDerivativeKernel)
+		yDerivative = cv2.filter2D(frame, cv2.CV_16S, yDerivativeKernel)
 
 		stepSize = cv2.getTrackbarPos("Step", "Trackbar") * 5 + 20
 
@@ -189,10 +195,15 @@ class Utilities:
 
 		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		angle = cv2.getTrackbarPos("Rotation", "Trackbar")
-		rows,cols = frame.shape
+		angle = angle / 180.0 * math.pi
+		rows, cols = frame.shape
+		center = (cols / 2, rows / 2)
 
-		M = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
-		frame = cv2.warpAffine(frame, M, (cols,rows))
+		M = np.array([
+						[math.cos(angle), math.sin(angle), (1.0 - math.cos(angle)) * center[0] - math.sin(angle) * center[1]], 
+	                    [-1.0 * math.sin(angle), math.cos(angle), math.sin(angle) * center[0] + (1.0 - math.cos(angle)) * center[1]]
+                     ])
+		frame = cv2.warpAffine(frame, M, (cols, rows), flags = cv2.WARP_INVERSE_MAP)
 		return frame
 
 	def displayHelp(self):

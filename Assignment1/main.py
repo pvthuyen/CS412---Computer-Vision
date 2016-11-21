@@ -16,18 +16,12 @@ while(True):
 	else:
 		frame = originalImage
 
-	# print frame.max(), frame.min()
-
 	rawKeyPressed = cv2.waitKey(1)
-
-	print rawKeyPressed
 
 	if rawKeyPressed == ord('q'):
 		break
 
 	frame = utilitiesInstance.processFrame(frame, rawKeyPressed)
-
-	# print frame.max(), frame.min(), frame.shape
 
 	# Display the resulting frame
 	cv2.imshow('frame', frame)
