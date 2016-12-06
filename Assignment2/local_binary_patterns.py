@@ -17,10 +17,14 @@ class LocalBinaryPatterns:
         + (1 << 0) * (X[1:-1, :-2] >= X[1:-1, 1:-1])
     res = []
     for x in keypoints:
-      rows, cols = int(x.pt[1]), int(x.pt[0])
-      if rows >= X.shape[0] or cols >= X.shape[1]:
-        continue
-      res.append(X[rows][cols])
+      rows, cols, size = int(x.pt[1] - 1), int(x.pt[0] - 1), int(x.size)
+      rows_range = (max(0, rows - size), min(X.shape[0], rows + size + 1))
+      cols_range = (max(0, cols - size), min(X.shape[1], cols + size + 1))
+      window = X[rows_range[0]:rows_range[1], cols_range[0]:cols_range[1]]
+      window = window.flatten()
+      hist = np.histogram(window, bins = range(257))
+      res.append(hist[0])
+
     res = np.array(res)
-    res = np.reshape(res, (-1, 1))
+    res = np.reshape(res, (-1, 256))
     return keypoints, np.uint8(res)

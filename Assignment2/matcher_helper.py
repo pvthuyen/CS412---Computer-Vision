@@ -130,11 +130,10 @@ class MatcherHelper:
 		bf = cv2.BFMatcher()
 		matches = bf.knnMatch(desc1, desc2, k=2)
 
-		# Apply ratio test
-		good = []
-		for m,n in matches:
-		    if m.distance < 0.75 * n.distance:
-		        good.append(m)
+		good = sorted(matches, key = lambda x: x[0].distance)
+		good = good[:100]
+
+		good = [x[0] for x in good]
 
 		# cv2.drawMatchesKnn expects list of lists as matches.
 		image3 = np.zeros(image1.shape)
