@@ -4,7 +4,7 @@ from local_binary_patterns import LocalBinaryPatterns
 
 class MatcherHelper:
     def __init__(self):
-        self.options = {
+        self._options = {
             'harris' : self.performHarrisDetector,
             'blob' : self.performBlobDetector,
             'dog' : self.performSIFTDetector,
@@ -12,8 +12,10 @@ class MatcherHelper:
             'h' : self.displayHelp,
         }
         self._helpText = [
-            "harris image.jpg - detect key points using harris algorithm",
-            "   and show the keypoints in original image.",
+            "If the image path is not specified, images will be taken from camera.",
+            "You can press any button to capture the image"
+            "harris image.jpg - detect key points using harris",
+            "   algorithm and show the keypoints in original image.",
             "blob image.jpg - detect key points using blob algorithm",
             "   and show the keypoints in original image.",
             "dog image.jpg - detect key points using DoG Algorithm",
@@ -33,64 +35,156 @@ class MatcherHelper:
             "h - display this help windows."
         ]
 
-    def performHarrisDetector(self, argument):
-        image = cv2.imread(argument[2])
-        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    def process(self, argument):
+        if argument[1] == 'm':
+            if len(argument) < 6:
+                cap = cv2.VideoCapture(0)
+                while True:
+                    _, image1 = cap.read()
+                    cv2.imshow("Image 1", image1)
+                    if cv2.waitKey(1) != -1:
+                        break
 
-        gray = np.float32(gray)
-        dst = cv2.cornerHarris(gray, 2, 3, 0.04)
-        image[dst>0.01*dst.max()]=[0,0,255]
-        cv2.imshow('harris', image)
+                while True:
+                    _, image2 = cap.read()
+                    cv2.imshow("Image 2", image2)
+                    if cv2.waitKey(1) != -1:
+                        break                        
+                if not cap:
+                    cap.release()
+            else:
+                image1 = cv2.imread(argument[4])
+                image2 = cv2.imread(argument[5])
+            self.performMatching(argument, image1, image2)
+        elif argument[1] != 'h':
+            if len(argument) < 3:
+                cap = cv2.VideoCapture(0)
+                while True:
+                    _, image = cap.read()
+                    cv2.imshow("Camera", image)
+                    if cv2.waitKey(1) != -1:
+                        break
+                if not cap:
+                    cap.release()
+            else:
+                image = cv2.imread(argument[2])
 
-    def performBlobDetector(self, argument):
-        image = cv2.imread(argument[2], cv2.IMREAD_GRAYSCALE)
-        # Setup SimpleBlobDetector parameters.
-        params = cv2.SimpleBlobDetector_Params()
+            self._options[argument[1]](image)
+        else:
+            self.displayHelp()
+            cv2.waitKey(0)
 
-        params.filterByColor = True;
-        params.blobColor = 255;
-         
-        # Change thresholds
-        params.minThreshold = 0;
-        params.maxThreshold = 10000;
-         
-        # Filter by Area.
-        params.filterByArea = True
-        params.minArea = 0
-        params.maxArea = 100000
-         
-        # Filter by Circularity
-        params.filterByCircularity = True
-        params.minCircularity = 0.1
-         
-        # Filter by Convexity
-        params.filterByConvexity = True
-        params.minConvexity = 0.2
-         
-        # Filter by Inertia
-        params.filterByInertia = True
-        params.minInertiaRatio = 0.01
-        # Create a detector with the parameters
-        detector = cv2.SimpleBlobDetector_create(params)
+        cv2.destroyAllWindows()
 
-        # Detect blobs.
-        keypoints = detector.detect(image)
-        imageWithKeypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-         
-        # Show keypoints
-        cv2.imshow("Blob", imageWithKeypoints)
 
-    def performSIFTDetector(self, argument):
-        image = cv2.imread(argument[2], cv2.IMREAD_GRAYSCALE)
-        sift = cv2.xfeatures2d.SIFT_create()
-        keypoints = sift.detect(image, None)
-         
-        imageWithKeypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        cv2.imshow('SIFT', imageWithKeypoints)
+    def performHarrisDetector(self, image):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray = np.float32(image)
 
-    def performMatching(self, argument):
-        image1 = cv2.imread(argument[4], cv2.IMREAD_GRAYSCALE)
-        image2 = cv2.imread(argument[5], cv2.IMREAD_GRAYSCALE)
+        cv2.namedWindow("Trackbar")
+        cv2.createTrackbar("Block size", "Trackbar", 0, 9, self.placeHolder)
+        cv2.createTrackbar("Aperture size", "Trackbar", 0, 9, self.placeHolder)
+        lastBlockSize = -1
+        lastApertureSize = -1
+
+        while True:
+            blockSize = cv2.getTrackbarPos("Block size", "Trackbar") + 2
+            apertureSize = cv2.getTrackbarPos("Aperture size", "Trackbar") * 2 + 3 
+            if blockSize != lastBlockSize or apertureSize != lastApertureSize:      
+                dst = cv2.cornerHarris(gray, blockSize, apertureSize, 0.04)
+                keypoints = np.argwhere(dst>0.01*dst.max())
+                keypoints = [cv2.KeyPoint(x[1], x[0], 1) for x in keypoints]
+                imageWithKeypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                cv2.imshow('harris', imageWithKeypoints)
+                lastBlockSize = blockSize
+                lastApertureSize = apertureSize
+            if cv2.waitKey(1) != -1:
+                break
+
+    def performBlobDetector(self, image):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        cv2.namedWindow("Trackbar")
+        cv2.createTrackbar("Min Area", "Trackbar", 0, 100, self.placeHolder)
+        cv2.createTrackbar("Max Area", "Trackbar", 100, 100, self.placeHolder)
+        # cv2.createTrackbar("Min Circularity", "Trackbar", 0, 100, self.placeHolder)
+        # cv2.createTrackbar("Max Circularity", "Trackbar", 100, 100, self.placeHolder)
+        # cv2.createTrackbar("Min Convexity", "Trackbar", 0, 100, self.placeHolder)
+        # cv2.createTrackbar("Max Convexity", "Trackbar", 100, 100, self.placeHolder)
+        lastMinArea = -1
+        lastMaxArea = -1
+
+        while True:
+            minArea = cv2.getTrackbarPos("Min Area", "Trackbar")
+            maxArea = cv2.getTrackbarPos("Max Area", "Trackbar") * 100
+
+            if minArea != lastMinArea or maxArea != lastMaxArea:
+                # Setup SimpleBlobDetector parameters.
+                params = cv2.SimpleBlobDetector_Params()
+
+                params.filterByColor = True;
+                params.blobColor = 255;
+                 
+                # Change thresholds
+                params.minThreshold = 0;
+                params.maxThreshold = 10000;
+                 
+                # Filter by Area.
+                params.filterByArea = True
+                params.minArea = minArea
+                params.maxArea = maxArea
+                 
+                # Filter by Circularity
+                params.filterByCircularity = True
+                params.minCircularity = 0.1
+                 
+                # Filter by Convexity
+                params.filterByConvexity = True
+                params.minConvexity = 0.2
+                 
+                # Filter by Inertia
+                params.filterByInertia = True
+                params.minInertiaRatio = 0.01
+                # Create a detector with the parameters
+                detector = cv2.SimpleBlobDetector_create(params)
+
+                # Detect blobs.
+                keypoints = detector.detect(image)
+                imageWithKeypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                 
+                # Show keypoints
+                cv2.imshow("Blob", imageWithKeypoints)
+
+                lastMinArea = minArea
+                lastMaxArea = maxArea
+            if cv2.waitKey(1) != -1:
+                break
+
+    def performSIFTDetector(self, image):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        cv2.namedWindow("Trackbar")
+        cv2.createTrackbar("Octave layers", "Trackbar", 0, 9, self.placeHolder)
+        cv2.createTrackbar("Contrast Threshold", "Trackbar", 0, 20, self.placeHolder)
+        lastOctaveLayers = -1
+        lastContastThreshold = -1
+
+        while True:
+            octaveLayers = cv2.getTrackbarPos("Octave layers", "Trackbar") + 3
+            contrastThreshold = (cv2.getTrackbarPos("Contrast Threshold", "Trackbar") + 4) / 100.0
+            if lastOctaveLayers != octaveLayers or contrastThreshold != lastContastThreshold:
+                sift = cv2.xfeatures2d.SIFT_create(nOctaveLayers = octaveLayers, contrastThreshold = contrastThreshold)
+                keypoints = sift.detect(image, None)
+             
+                imageWithKeypoints = cv2.drawKeypoints(image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                cv2.imshow('SIFT', imageWithKeypoints)
+
+                lastOctaveLayers = octaveLayers
+                lastContastThreshold = contrastThreshold
+            if cv2.waitKey(1) != -1:
+                break
+
+    def performMatching(self, argument, image1, image2):
+        image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+        image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
 
         if argument[2] == 'harris':
             gray = np.float32(image1)
@@ -164,7 +258,7 @@ class MatcherHelper:
 
         cv2.imshow('Matches', image3)
 
-    def displayHelp(self, argument):
+    def displayHelp(self):
         cv2.namedWindow("Help")
         helpFrame = np.zeros((500, 1280))
         originX = 25
@@ -176,3 +270,6 @@ class MatcherHelper:
             originY += textSize[1] + 10
         
         cv2.imshow("Help", helpFrame)
+
+    def placeHolder(self, x):
+        pass
