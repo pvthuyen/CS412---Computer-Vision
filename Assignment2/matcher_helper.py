@@ -56,6 +56,7 @@ class MatcherHelper:
                 image1 = cv2.imread(argument[4])
                 image2 = cv2.imread(argument[5])
             self.performMatching(argument, image1, image2)
+            cv2.waitKey(0)
         elif argument[1] != 'h':
             if len(argument) < 3:
                 cap = cv2.VideoCapture(0)
