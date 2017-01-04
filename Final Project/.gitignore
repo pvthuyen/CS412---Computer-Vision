@@ -1,0 +1,14 @@
+temp.mat
+oxbuild_images.tgz
+ImageRetrievalCpp
+utils/compute_ap/compute_ap
+local_configurations.h
+data/*
+.idea/*
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+install_manifest.txt
+*.o
+compute_map
